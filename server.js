@@ -4,12 +4,10 @@ const app = express();
 
 app.use(express.json());
 
-// Root
 app.get("/", (_req, res) => {
   res.send("🚀 Zeon x402 Mint API is live!");
 });
 
-// Mint endpoint
 app.post("/api/mint", (_req, res) => {
   res
     .status(402)
@@ -28,26 +26,28 @@ app.post("/api/mint", (_req, res) => {
 
       accepts: [
         {
-          scheme: "exact",                     // ✅ must be "exact"
-          network: "base",                     // chain/network
-          resource: "https://zeon-mint-api-production.up.railway.app/pay/usdc",
-          description: "Send $1.5 USDC on Base to index your mint",
-          mimeType: "application/json",
-          payTo: "0xF7A5D65840683B2831BDB2B93222057b28D735B4",
-          maxAmountRequired: "1.5",            // ✅ string, not number
+          scheme: "exact",
+          network: "base",
+          asset: "USDC",
+          // 1.5 USDC in smallest unit (6 decimals) => 1_500_000
+          maxAmountRequired: "1500000",
           maxTimeoutSeconds: 900,
-          asset: "USDC"                        // ✅ just a string
+          payTo: "0xF7A5D65840683B2831BDB2B93222057b28D735B4",
+          resource: "https://zeon-mint-api-production.up.railway.app/pay/usdc",
+          mimeType: "application/json",
+          description: "Send $1.5 USDC (1,500,000 microUSDC) on Base to index your mint"
         },
         {
           scheme: "exact",
           network: "base",
-          resource: "https://zeon-mint-api-production.up.railway.app/pay/eth",
-          description: "Send the ETH equivalent of $1.5 on Base",
-          mimeType: "application/json",
-          payTo: "0xF7A5D65840683B2831BDB2B93222057b28D735B4",
-          maxAmountRequired: "0.00037",
+          asset: "ETH",
+          // ≈0.00037 ETH in wei (18 decimals) => 370_000_000_000_000
+          maxAmountRequired: "370000000000000",
           maxTimeoutSeconds: 900,
-          asset: "ETH"
+          payTo: "0xF7A5D65840683B2831BDB2B93222057b28D735B4",
+          resource: "https://zeon-mint-api-production.up.railway.app/pay/eth",
+          mimeType: "application/json",
+          description: "Send ETH equivalent (~0.00037 ETH = 370,000,000,000,000 wei) on Base"
         }
       ],
 
