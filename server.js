@@ -1,21 +1,23 @@
-// Zeon x402 Mint API — guaranteed 402 for /api/mint
+// Robust x402 Mint API: always returns 402 on /api/mint (no redirects)
 const express = require("express");
 const app = express();
 
+app.enable("trust proxy");
+app.set("case sensitive routing", true);
+app.set("strict routing", true);
+
 app.use(express.json());
 
-// --- Basic logging to verify requests hit this app ---
+// Simple logs to verify requests hit THIS app
 app.use((req, _res, next) => {
-  console.log(`[REQ] ${req.method} ${req.url}`);
+  console.log(`[REQ] ${req.method} ${req.originalUrl}`);
   next();
 });
 
-// --- Health route (200) ---
-app.get("/", (_req, res) => {
-  res.send("🚀 Zeon x402 API is live");
-});
+// Health (200)
+app.get("/", (_req, res) => res.send("🚀 x402 API up"));
 
-// --- Tester route: guaranteed 402 to verify deployment ---
+// A forced-402 tester to check deployment quickly
 app.all("/force402", (_req, res) => {
   res
     .status(402)
@@ -23,59 +25,59 @@ app.all("/force402", (_req, res) => {
       "Content-Type": "application/json; charset=utf-8",
       "Access-Control-Allow-Origin": "*",
     })
-    .json({ ok: true, note: "forced 402 works" });
+    .json({ ok: true, note: "force402 works" });
 });
 
-// --- Mint route: MUST return 402 for x402scan ---
-app.all("/api/mint", (_req, res) => {
+// The x402 Mint response body (put your values here)
+function mintBody() {
+  return {
+    x402Version: 1,
+    tick: "zeon",
+    p: "x402",
+    op: "mint",
+    amt: "1250",
+    fee_usd: "1.5",
+    dev_wallet: "0xF7A5D65840683B2831BDB2B93222057b28D735B4",
+    accepts: [
+      {
+        scheme: "exact",
+        network: "base",
+        asset: "USDC",
+        // MUST be STRING in smallest unit (USDC=6dp): 1.5 -> 1500000
+        maxAmountRequired: "1500000",
+        maxTimeoutSeconds: 900,
+        payTo: "0xF7A5D65840683B2831BDB2B93222057b28D735B4",
+        resource: "https://example.com/pay/usdc",
+        mimeType: "application/json",
+        description: "Mint 1,250 ZEON for $1.50 USDC on Base"
+      }
+    ],
+    payer: "zeonx402",
+    status: "ok",
+    desc: "Zeon x402 Mint — pay to index each mint"
+  };
+}
+
+// Return 402 for GET/POST/HEAD and with/without trailing slash
+const mintHandler = (_req, res) => {
   res
-    .status(402) // REQUIRED by x402
+    .status(402)
     .set({
       "Content-Type": "application/json; charset=utf-8",
       "Access-Control-Allow-Origin": "*",
     })
-    .json({
-      x402Version: 1,
-      tick: "zeon",
-      p: "x402",
-      op: "mint",
-      amt: "1250",
-      fee_usd: "1.5",
-      dev_wallet: "0xF7A5D65840683B2831BDB2B93222057b28D735B4",
-      accepts: [
-        {
-          scheme: "exact",
-          network: "base",
-          asset: "USDC",
-          // amounts must be strings in the smallest unit
-          maxAmountRequired: "1500000", // 1.5 USDC -> 1,500,000 (6 decimals)
-          maxTimeoutSeconds: 900,
-          payTo: "0xF7A5D65840683B2831BDB2B93222057b28D735B4",
-          resource: "https://your-domain.example/pay/usdc",
-          mimeType: "application/json",
-          description: "Mint 1,250 ZEON for $1.50 USDC on Base",
-        },
-        // Optional ETH option (uncomment if you want a second option)
-        // {
-        //   scheme: "exact",
-        //   network: "base",
-        //   asset: "ETH",
-        //   maxAmountRequired: "370000000000000", // ~0.00037 ETH in wei
-        //   maxTimeoutSeconds: 900,
-        //   payTo: "0xF7A5D65840683B2831BDB2B93222057b28D735B4",
-        //   resource: "https://your-domain.example/pay/eth",
-        //   mimeType: "application/json",
-        //   description: "Mint 1,250 ZEON — pay ETH equivalent on Base",
-        // },
-      ],
-      payer: "zeonx402",
-      status: "ok",
-      desc: "Zeon x402 Mint — pay to index each mint",
-    });
-});
+    .json(mintBody());
+};
 
-// --- Clear 404 for anything else (kept last) ---
-app.use("*", (_req, res) => res.status(404).send("Not found"));
+app.get("/api/mint", mintHandler);
+app.post("/api/mint", mintHandler);
+app.head("/api/mint", mintHandler);
+app.get("/api/mint/", mintHandler);
+app.post("/api/mint/", mintHandler);
+app.head("/api/mint/", mintHandler);
+
+// Clear 404 for the rest
+app.use((_req, res) => res.status(404).send("Not found"));
 
 const PORT = process.env.PORT || 3000;
-app.listen(PORT, () => console.log(`✅ API running on port ${PORT}`));
+app.listen(PORT, () => console.log(`✅ API on ${PORT}`));
