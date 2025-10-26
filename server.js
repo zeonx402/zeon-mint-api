@@ -1,14 +1,15 @@
-// Zeon x402 Mint API (x402scan schema-compliant)
+// Zeon x402 Mint API (x402scan strict schema compliant)
 const express = require("express");
 const app = express();
 
 app.use(express.json());
 
+// Root
 app.get("/", (_req, res) => {
   res.send("🚀 Zeon x402 Mint API is live!");
 });
 
-// MUST return HTTP 402 with detailed accepts[] objects
+// Mint endpoint
 app.post("/api/mint", (_req, res) => {
   res
     .status(402)
@@ -18,51 +19,35 @@ app.post("/api/mint", (_req, res) => {
     })
     .json({
       x402Version: 1,
-
-      // Operation
       tick: "zeon",
       p: "x402",
       op: "mint",
       amt: "1250",
-
-      // Indexing/dev fee
       fee_usd: "1.5",
       dev_wallet: "0xF7A5D65840683B2831BDB2B93222057b28D735B4",
 
-      // Payment options (each object must include the fields below)
       accepts: [
         {
-          scheme: "evm",                 // payment scheme
-          network: "base",               // chain/network
-          asset: {                       // what to pay with
-            type: "erc20",
-            symbol: "USDC",
-            // TODO: set to your USDC contract on Base if you want strict validation
-            address: "0x0000000000000000000000000000000000000000",
-            decimals: 6
-          },
-          maxAmountRequired: 1.5,        // amount in unit of 'asset' (USDC has 6 dp)
-          maxTimeoutSeconds: 900,        // allow 15 minutes
-          payTo: "0xF7A5D65840683B2831BDB2B93222057b28D735B4", // receiver
-          // a resource/intent URL describing this payment (can be your own docs/endpoint)
+          scheme: "exact",                     // ✅ must be "exact"
+          network: "base",                     // chain/network
           resource: "https://zeon-mint-api-production.up.railway.app/pay/usdc",
+          description: "Send $1.5 USDC on Base to index your mint",
           mimeType: "application/json",
-          description: "Send $1.5 USDC on Base to index your mint"
+          payTo: "0xF7A5D65840683B2831BDB2B93222057b28D735B4",
+          maxAmountRequired: "1.5",            // ✅ string, not number
+          maxTimeoutSeconds: 900,
+          asset: "USDC"                        // ✅ just a string
         },
         {
-          scheme: "evm",
+          scheme: "exact",
           network: "base",
-          asset: {
-            type: "native",
-            symbol: "ETH"
-          },
-          // 1.5 USD in ETH (approx) — replace dynamically if you have a price feed
-          maxAmountRequired: 0.00037,
-          maxTimeoutSeconds: 900,
-          payTo: "0xF7A5D65840683B2831BDB2B93222057b28D735B4",
           resource: "https://zeon-mint-api-production.up.railway.app/pay/eth",
+          description: "Send the ETH equivalent of $1.5 on Base",
           mimeType: "application/json",
-          description: "Send the ETH equivalent of $1.5 on Base"
+          payTo: "0xF7A5D65840683B2831BDB2B93222057b28D735B4",
+          maxAmountRequired: "0.00037",
+          maxTimeoutSeconds: 900,
+          asset: "ETH"
         }
       ],
 
