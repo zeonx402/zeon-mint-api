@@ -12,8 +12,8 @@ app.post("/api/mint", (_req, res) => {
     tick: "zeon",
     p: "x402",
     op: "mint",
-    amt: "125",
-    fee_usd: "0.15",
+    amt: "1250",
+    fee_usd: "1.5",
     dev_wallet: "0xF7A5D65840683B2831BDB2B93222057b28D735B4",
     status: "ok"
   });
