@@ -1,14 +1,14 @@
-// Zeon x402 Mint API — returns x402 402 response
+// Ensure this is ABOVE app.listen(...)
 const express = require("express");
 const app = express();
 app.use(express.json());
 
-app.get("/", (_req, res) => res.send("🚀 Zeon x402 Mint API is live!"));
+app.get("/", (_req, res) => res.send("🚀 Zeon x402 API"));
 
-// The Mint endpoint
-app.post("/api/mint", (_req, res) => {
+// Respond with 402 for BOTH POST and GET so browsers & x402scan both work
+app.all("/api/mint", (req, res) => {
   res
-    .status(402) // important for x402 to detect the payment request
+    .status(402) // <-- REQUIRED by x402scan
     .set({
       "Content-Type": "application/json; charset=utf-8",
       "Access-Control-Allow-Origin": "*",
@@ -26,10 +26,10 @@ app.post("/api/mint", (_req, res) => {
           scheme: "exact",
           network: "base",
           asset: "USDC",
-          maxAmountRequired: "1500000", // 1.5 USDC (6 decimals)
+          maxAmountRequired: "1500000", // 1.5 USDC in micro units (6 dp)
           maxTimeoutSeconds: 900,
           payTo: "0xF7A5D65840683B2831BDB2B93222057b28D735B4",
-          resource: "https://zeon-mint-api-production.up.railway.app/api/mint",
+          resource: "https://your-domain/pay/usdc",
           mimeType: "application/json",
           description: "Mint 1,250 ZEON for $1.50 USDC on Base",
         },
@@ -40,5 +40,4 @@ app.post("/api/mint", (_req, res) => {
     });
 });
 
-const PORT = process.env.PORT || 3000;
-app.listen(PORT, () => console.log(`✅ Zeon Mint API running on port ${PORT}`));
+// keep your app.listen(...)
