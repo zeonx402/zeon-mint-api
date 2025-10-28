@@ -1,5 +1,5 @@
 // server.js
-// 🚀 ZEON Mint API - جاهز لـ x402scan
+// 🚀 ZEON Mint API — compatible with x402scan
 
 import express from "express";
 import cors from "cors";
@@ -9,47 +9,49 @@ const app = express();
 app.use(cors());
 app.use(bodyParser.json());
 
-// إعدادات النعناع
-const TOKEN_NAME = "zeon";               // اسم العملة
-const ZEON_PER_BUNDLE = 1250;            // كمية التوكن في الحزمة الواحدة
-const PRICE_PER_BUNDLE_USD = 1.5;        // السعر بالدولار للحزمة
-const CURRENCY = "USDC";                 // العملة المستخدمة للسعر
+// ===== Config =====
+const TOKEN_NAME = "zeon";        // اسم التوكن
+const ZEON_PER_BUNDLE = 1250;     // عدد ZEON في كل حزمة
+const PRICE_PER_BUNDLE_USD = 1.5; // السعر بالدولار لكل حزمة
+const CURRENCY = "USDC";          // عملة التسعير
 
-// ✅ نقطة النهاية الرئيسية للسكّ
+// ===== Mint Endpoint =====
 app.post("/api/mint", async (req, res) => {
   try {
     const { p, op, tick, id, amt } = req.body || {};
 
-    // 🎯 إذا لم يُرسل body (فحص من x402scan)
+    // x402scan probe: no body => must return 402 with a typed JSON body
     if (!p && !op && !tick && !id && !amt) {
       return res.status(402).json({
         ok: false,
         error: "Payment Required",
+        x402Version: "1.0",
         p: "x402",
         op: "mint",
         tick: TOKEN_NAME,
         amt: ZEON_PER_BUNDLE.toString(),
         price: PRICE_PER_BUNDLE_USD.toString(),
         currency: CURRENCY,
-        note: "Send valid JSON body to mint ZEON tokens"
+        message: `Mint ${ZEON_PER_BUNDLE} ${TOKEN_NAME.toUpperCase()} = $${PRICE_PER_BUNDLE_USD}`,
+        info: "Send a valid JSON body to complete mint operation."
       });
     }
 
-    // 🧩 تحقق من صحة JSON المُرسل
+    // Validate client mint body
     if (p !== "x402" || op !== "mint" || tick !== TOKEN_NAME || !amt) {
       return res.status(400).json({ ok: false, error: "Invalid JSON" });
     }
 
     const amount = Number(amt);
-    if (isNaN(amount) || amount <= 0) {
+    if (!Number.isFinite(amount) || amount <= 0) {
       return res.status(400).json({ ok: false, error: "Invalid amount" });
     }
 
-    // 💰 حساب السعر الكلي وعدد الحزم
+    // Pricing
     const bundles = Math.ceil(amount / ZEON_PER_BUNDLE);
     const totalPrice = bundles * PRICE_PER_BUNDLE_USD;
 
-    // ✅ ردّ السكّ الناجح
+    // Success response (you can also add on-chain tx creation later)
     return res.json({
       ok: true,
       id,
@@ -59,35 +61,36 @@ app.post("/api/mint", async (req, res) => {
       pricePerBundleUSD: PRICE_PER_BUNDLE_USD.toFixed(2),
       totalPriceUSD: totalPrice.toFixed(2),
       currency: CURRENCY,
-      message: `Minting ${amount} ZEON = ${bundles} bundle(s) for $${totalPrice.toFixed(2)}`
+      message: `Minting ${amount} ${TOKEN_NAME.toUpperCase()} = ${bundles} bundle(s) for $${totalPrice.toFixed(2)}`
     });
 
   } catch (err) {
     console.error("❌ Server Error:", err);
-    res.status(500).json({ ok: false, error: err.message });
+    return res.status(500).json({ ok: false, error: err.message || "Server error" });
   }
 });
 
-// 🌐 صفحة بسيطة لتأكيد أن الخادم شغال
-app.get("/", (req, res) => {
+// Simple landing page
+app.get("/", (_req, res) => {
   res.send(`
     <html>
       <head>
+        <meta charset="utf-8" />
         <title>ZEON Mint API</title>
         <style>
-          body { font-family: sans-serif; text-align: center; margin-top: 5rem; }
-          code { background: #f4f4f4; padding: 5px 8px; border-radius: 6px; }
+          body { font-family: system-ui, sans-serif; text-align:center; margin:4rem; }
+          code, pre { background:#f4f4f4; padding:.5rem .75rem; border-radius:8px; }
         </style>
       </head>
       <body>
         <h2>🚀 ZEON Mint API is running</h2>
-        <p>Use <code>POST /api/mint</code> to mint tokens.</p>
-        <p>Example JSON:</p>
+        <p>Use <code>POST /api/mint</code>. Probe without a body returns <b>402</b> for x402scan.</p>
+        <p>Example body:</p>
         <pre>{
   "p": "x402",
   "op": "mint",
   "tick": "zeon",
-  "id": "zeon-20251028-a94f31b8",
+  "id": "zeon-20251028-abc123",
   "amt": "1250"
 }</pre>
       </body>
@@ -95,7 +98,7 @@ app.get("/", (req, res) => {
   `);
 });
 
-// 🚀 تشغيل الخادم
+// Start server
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
   console.log(`✅ ZEON Mint API running on port ${PORT}`);
