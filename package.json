@@ -1,6 +1,7 @@
 {
   "name": "zeon-mint",
   "version": "1.0.0",
+  "description": "ZEON Mint API for x402scan integration",
   "main": "server.js",
   "type": "module",
   "scripts": {
