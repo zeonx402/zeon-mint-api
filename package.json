@@ -1,21 +1,18 @@
 {
-  "type": "object",
-  "required": ["p", "op", "tick", "id", "amt"],
-  "properties": {
-    "p": { "const": "x402", "description": "Protocol" },
-    "op": { "const": "mint", "description": "Operation" },
-    "tick": { "const": "zeon", "description": "Token Ticker" },
-    "id": {
-      "type": "string",
-      "title": "Mint ID",
-      "description": "معرّف العملية (حرّر أو اتركه تلقائيًا)"
-    },
-    "amt": {
-      "type": "string",
-      "title": "Amount (ZEON)",
-      "pattern": "^[0-9]+$",
-      "default": "1250",
-      "description": "كل 1250 ZEON = 1.5 USDC"
-    }
+  "name": "zeon-mint-api",
+  "version": "1.0.0",
+  "description": "ZEON Mint API for x402scan",
+  "main": "server.js",
+  "type": "module",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "engines": {
+    "node": ">=18 <21"
+  },
+  "dependencies": {
+    "express": "^4.18.2",
+    "cors": "^2.8.5",
+    "body-parser": "^1.20.2"
   }
 }
